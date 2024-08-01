@@ -21,8 +21,8 @@ blogRouter.use(async (c, next) => {
 		c.status(401);
 		return c.json({ error: "unauthorized" });
 	}
-	const token = jwt.split(' ')[1];
-	const payload = await verify(token, c.env.JWT_SECRET);
+	// const token = jwt.split(' ')[1];
+	const payload = await verify(jwt, c.env.JWT_SECRET);
 	if (!payload) {
 		c.status(401);
 		return c.json({ error: "unauthorized" });
@@ -89,7 +89,18 @@ blogRouter.get('/', async (c) => {
 		datasourceUrl: c.env?.DATABASE_URL	,
 	}).$extends(withAccelerate());
 	
-	const posts = await prisma.post.findMany({});
+	const posts = await prisma.post.findMany({
+		select: {
+			content: true,
+			title: true,
+			id: true,
+			author: {
+				select: {
+					name: true
+				}
+			}
+		}
+	});
 
 	return c.json(posts);
 })
@@ -103,6 +114,15 @@ blogRouter.get('/:id', async (c) => {
 	const post = await prisma.post.findUnique({
 		where: {
 			id: postId
+		},
+		select: {
+			title: true,
+			content: true,
+			author: {
+				select: {
+					name: true
+				}
+			}
 		}
 	});
 
